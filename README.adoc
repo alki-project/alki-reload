@@ -1,0 +1,162 @@
+= Alki::Reload
+
+Provides auto-reload feature to Alki projects. Like the auto-reload feature in Ruby on Rails, when
+enabled it will monitor source files and whenever a change is detected, will reload the project.
+
+== Installation
+
+Add this line to your application's Gemfile:
+
+[source,ruby]
+----
+gem 'alki-reload'
+----
+
+And then execute:
+
+[source]
+----
+$ bundle
+----
+
+Or install it yourself as:
+
+[source]
+----
+$ gem install alki-reload
+----
+
+== Usage
+
+To use Alki::Reload in an Alki project, it must be mounted in the assembly. By default, Alki::Reload
+will not actively watch files or actively hook into services. Setting `enable` to true will enable both.
+
+.config/assembly.rb
+```ruby
+Alki do
+  mount :reloader, 'alki/reload' do
+    set(:enable) { true }
+  end
+# ...
+end
+```
+
+### Conditional usage
+
+Because enabling reload can have a performance impact, typically it's only enabled when in some sort
+of development mode.
+
+.config/assembly.rb
+```ruby
+Alki do
+  set(:development?) { ENV['APP_ENV'] != 'production' }
+
+  mount :reloader, 'alki/reload' do
+    set(:enable) { development? }
+  end
+# ...
+end
+```
+
+### Main Loops
+
+A problem that naturally comes up is how to reload an application, while the application is running.
+Most applications, when running, spend most of their time inside a "main loop". If it's a server,
+it might be the loop listening for incoming data, if it's a console application it might be the loop
+waiting for user input.
+
+Because the main loop is always running, there is never an opportunity to reload it. Alki::Reload
+provides a feature to help work around this.
+
+First off, because the service the main loop is in can't be reloaded, it should be made as small and
+simple as possible, offloading all other functionality into secondary services that it takes as
+dependencies.
+
+Second, it should be tagged with a `main_loop` tag. By tagging your main loop service, Alki::Reload will
+actively hook into the service and wrap it's dependencies with wrapper objects that will pick up the
+new version of those dependencies whenever the project is reloaded.
+
+Alki::Loader must be enabled for this feature to be active.
+
+.config/assembly.rb
+```ruby
+Alki do
+  mount :reloader, 'alki/reload', enable: true
+
+  set :prompt, "> "
+  service :handler do
+    -> line { puts line }
+  end
+
+  tag :main_loop
+  service :main do
+    require 'readline_loop'
+    ReadlineLoop.new prompt, handler
+  end
+  # ...
+end
+```
+
+.lib/readline_loop.rb
+```ruby
+require 'readline'
+class ReadlineLoop
+  def initialize(prompt, handler)
+    @prompt = prompt
+    @handler = handler
+  end
+
+  def run
+    while line = Readline.readline(@prompt,true)
+      @handler.call line
+    end
+  end
+end
+```
+
+In this example, our main loop is `main.run`. Because the `main` service is tagged even while it
+is running the prompt and handler can be changed and reloaded.
+
+### Watched Directories
+
+By default, `lib`, `config` and any files or directories configured in
+https://github.com/alki-project/alki-loader[Alki::Loader] are watched.
+
+Additional directories can be added by overriding the dirs element. Additional directories must also
+be in `$LOAD_PATH`.
+
+.config/assembly.rb
+```ruby
+Alki do
+  mount :reloader, 'alki/reload' do
+    set(:enable) { true }
+    set(:dirs) { original.dirs + ['app'] }
+  end
+# ...
+end
+```
+
+### Manual Reloading
+
+In addition to watching for filesystem changes, a project can be reloaded manually by calling
+the `reload` func in the reloader. This works even when the reloader is not enabled.
+
+.config/assembly.rb
+```ruby
+Alki do
+  mount :reloader, 'alki/reload'
+# ...
+end
+```
+
+```ruby
+instance.reloader.reload # reload instance
+```
+
+== Contributing
+
+Bug reports and pull requests are welcome on GitHub at https://github.com/alki-project/alki-reload. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the http://contributor-covenant.org[Contributor Covenant] code of conduct.
+
+== License
+
+The gem is available as open source under the terms of the http://opensource.org/licenses/MIT[MIT License].

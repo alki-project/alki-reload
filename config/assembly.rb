@@ -5,6 +5,10 @@ Alki do
 
   set :enable, false
 
+  set :main_loops do
+    enable
+  end
+
   set :watch do
     enable
   end
@@ -28,7 +32,7 @@ Alki do
   factory :reloadable_reference do
     require 'alki/reload/reloadable_delegator'
     -> (ref) {
-      if enable
+      if main_loops
         Alki::Reload::ReloadableDelegator.new(root.assembly_instance,ref)
       else
         ref.call
