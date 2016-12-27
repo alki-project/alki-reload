@@ -10,7 +10,7 @@ module Alki
       def handle_path(path)
         @dirs.each do |dir|
           if path.start_with? dir
-            return path[dir.size..-1].match(%r{(?:(.*)/)?(.*).rb})[1..2]
+            return path[dir.size..-1].chomp('.rb')
           end
         end
         nil

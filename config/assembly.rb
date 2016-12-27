@@ -3,7 +3,11 @@ Alki do
     root.assembly_instance.__reload__
   end
 
-  set :watch, false
+  set :enable, false
+
+  set :watch do
+    enable
+  end
 
   set :dirs do
     ['lib']
@@ -19,13 +23,26 @@ Alki do
     end
   end
 
-  service :handlers do
-    [dsl_handler,load_path_handler]
+  reference_overlay '%main_loop', :reloadable_reference
+
+  factory :reloadable_reference do
+    require 'alki/reload/reloadable_delegator'
+    -> (ref) {
+      if enable
+        Alki::Reload::ReloadableDelegator.new(root.assembly_instance,ref)
+      else
+        ref.call
+      end
+    }
   end
 
-  service :dsl_handler do
-    require 'alki/reload/dsl_handler'
-    Alki::Reload::DslHandler.new root_dir
+  service :handlers do
+    [loader_handler,load_path_handler]
+  end
+
+  service :loader_handler do
+    require 'alki/reload/loader_handler'
+    Alki::Reload::LoaderHandler.new root_dir
   end
 
   service :load_path_handler do

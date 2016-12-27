@@ -1,8 +1,8 @@
-require 'alki/dsl/registry'
+require 'alki/loader'
 
 module Alki
   module Reload
-    class DslHandler
+    class LoaderHandler
       def initialize(root_dir)
         @root_dir = File.join(root_dir,'')
       end
@@ -11,17 +11,15 @@ module Alki
         dirs.each do |dir|
           dir = File.join(dir,'')
           if path.start_with? dir
-            entry = Alki::Dsl::Registry.lookup(path)
-            if entry && entry.data[:prefix] && entry.data[:name]
-              return [entry.data[:prefix], entry.data[:name]]
-            end
+            name = Alki::Loader.lookup_name path
+            return name if name
           end
         end
         nil
       end
 
       def dirs
-        Alki::Dsl::Registry.registered_dirs.select do |d|
+        Alki::Loader.registered_paths.select do |d|
           d.start_with?(@root_dir)
         end
       end

@@ -1,5 +1,4 @@
 require 'alki/support'
-require 'alki/dsl/registry'
 
 module Alki
   module Reload
@@ -16,8 +15,9 @@ module Alki
           if path.end_with?('.rb')
             result = @handlers.lazy.map{|h| h.handle_path path }.find{|r| r != nil}
             if result
-              add_const consts, *result
-              files << path
+              if add_const consts, result
+                files << path
+              end
             end
           end
         end
@@ -33,19 +33,21 @@ module Alki
 
       private
 
-      def add_const(consts,parent,name)
-        unless whitelisted? parent, name
-          parent = parent ? Alki::Support.load_class(parent) : Object
+      def add_const(consts,name)
+        unless @whitelist.include? name
+          md = name.match(%r{(.*)/(.*)})
+          if md
+            parent = Alki::Support.constantize Alki::Support.classify md[1]
+            name = md[2]
+          else
+            parent = Object
+          end
           name = Alki::Support.classify(name).to_sym
           if parent && parent.is_a?(Module) && parent.const_defined?(name,false)
             consts << [parent,name]
             true
           end
         end
-      end
-
-      def whitelisted?(parent,name)
-        @whitelist.include?(parent ? File.join(parent,name) : name)
       end
     end
   end
