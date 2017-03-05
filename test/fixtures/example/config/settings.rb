@@ -1,3 +1,3 @@
 Alki do
-  set :val, "<<>>"
+  set :val, "<<one>>"
 end

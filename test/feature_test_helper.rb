@@ -1,13 +1,11 @@
-require 'alki/feature_test'
-require 'fileutils'
-require 'erb'
-
-describe 'Main loop' do
+class AlkiReloadExampleSpec < Minitest::Spec
   before do
-    @dir = File.join(Dir.mktmpdir,'')
+    @dir = Dir.mktmpdir('alki-reload-test')
     @proj_dir = File.join(@dir,'example')
     FileUtils.copy_entry fixture_path('example'), @proj_dir
     $LOAD_PATH.unshift File.join(@proj_dir,'lib')
+    require 'example'
+    @instance = Example.new
   end
 
   after do
@@ -28,20 +26,19 @@ describe 'Main loop' do
   end
 
   def set_val(val)
+    version = @instance.__version__
     path = File.join @proj_dir, 'config', 'settings.rb'
     File.write path, File.read(path).sub(/<<.*?>>/,"<<#{val}>>")
-  end
 
-  it 'should make dependencies of main_loop services reloadable' do
-    set_val 'one'
-    require 'example'
-    instance = Example.new
-    main = instance.main
-    main.call.must_equal "<<one>>"
-    until instance.__version__ > 1
-      set_val 'two'
-      sleep 1
+    count = 0
+    until @instance.__version__ > version
+      sleep 0.1
+      count += 1
+      count.must_be :<, 5
     end
-    main.call.must_equal "<<two>>"
   end
+end
+
+Minitest::Spec.register_spec_type AlkiReloadExampleSpec do |desc|
+  desc.is_a? String
 end

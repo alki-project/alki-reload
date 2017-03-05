@@ -72,21 +72,23 @@ Alki do
   end
 
   service :watcher do
-    require 'alki/reload/listen_watcher'
-    Alki::Reload::ListenWatcher.new assembly, watch_dirs
+    if watch
+      require 'alki/reload/listen_watcher'
+      Alki::Reload::ListenWatcher.new assembly, watch_dirs
+    else
+      require 'alki/reload/null_watcher'
+      Alki::Reload::NullWatcher.new
+    end
   end
 
-  overlay :watcher, :on_reload, :stop!
+  overlay :watcher, :on_reload, :stop
 
   overlay 'root.assembly_instance', :assembly_delegator
 
   factory :assembly_delegator do
     require 'alki/reload/assembly_delegator'
-    if watch
-      self.watcher.start!
-    end
     -> obj {
-      Alki::Reload::AssemblyDelegator.new obj, reloader
+      Alki::Reload::AssemblyDelegator.new obj, watcher, reloader
     }
   end
 

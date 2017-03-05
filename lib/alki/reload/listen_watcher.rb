@@ -1,71 +1,53 @@
 require 'listen'
-require 'weakref'
+require 'concurrent'
 
 module Alki
   module Reload
     class ListenWatcher
       @listeners = {}
 
+      def self.listener(dirs,reloader)
+        @listeners[dirs] ||= Listener.new(dirs,reloader)
+      end
+
       def initialize(reloader,dirs)
-        @reloader = reloader
-        @dirs = dirs
+        @listener = self.class.listener dirs, reloader
+        @started = false
       end
 
-      def start!
-        start_thread unless @thread
-      end
-
-      def stop!
-        if @thread && @thread != Thread.current
-          @queue.clear
-          @queue << :done
-          @thread.join
+      def start
+        unless @started
+          @listener.start
+          @started = true
         end
       end
 
-      private
-
-      def self.listener(dir,queue)
-        dir = File.join(dir,'')
-        unless @listeners[dir]
-          qs = []
-          @listeners[dir] = [qs,Listen.to(dir) do
-            qs.delete_if do |q|
-              begin
-                q << :reload
-                false
-              rescue WeakRef::RefError
-                true
-              end
-            end
-          end.tap{|l| l.start }]
+      def stop
+        if @started
+          @listener.stop
+          @started = false
         end
-        @listeners[dir][0] << WeakRef.new(queue)
       end
 
-      def start_thread
-        @queue = Queue.new
-        @thread = Thread.new do
-          @dirs.each{|dir| self.class.listener(dir,@queue) }
-          done = false
-          until done
-            begin
-              cmd = @queue.pop
-              if cmd == :done
-                done = true
-              elsif cmd == :reload
-                if @reloader.reload
-                  done = true
-                end
-              end
-            rescue => e
-              $stderr.puts e
-              $stderr.puts e.backtrace.join("\n")
+      class Listener
+        def initialize(dirs,reloader)
+          @count = 0
+          @listen = Listen.to(*dirs) do |modified, _added, _removed|
+            if @count > 0 && modified
+              reloader.reload
             end
           end
-          @queue.clear
-          @queue = nil
-          @thread = nil
+        end
+
+        def start
+          if @count == 0
+            @listen.start
+          end
+          @count += 1
+        end
+
+        def stop
+          @count -= 1
         end
       end
     end
