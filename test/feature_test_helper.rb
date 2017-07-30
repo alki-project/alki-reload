@@ -1,3 +1,5 @@
+require 'fileutils'
+
 class AlkiReloadExampleSpec < Minitest::Spec
   before do
     @dir = Dir.mktmpdir('alki-reload-test')

@@ -1,6 +1,4 @@
 require 'alki/feature_test'
-require 'fileutils'
-require 'erb'
 require 'thread'
 
 describe 'Main loops' do

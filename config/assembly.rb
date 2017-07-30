@@ -71,6 +71,7 @@ Alki do
     Alki::Reload::Unloader.new handlers, whitelist
   end
 
+  tag :stop_on_reload
   service :watcher do
     if watch
       require 'alki/reload/listen_watcher'
@@ -81,7 +82,7 @@ Alki do
     end
   end
 
-  overlay :watcher, :on_reload, :stop
+  overlay '%stop_on_reload', :on_reload, :stop
 
   overlay 'root.assembly_instance', :assembly_delegator
 

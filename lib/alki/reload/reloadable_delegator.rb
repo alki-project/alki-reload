@@ -10,7 +10,7 @@ module Alki
 
       def __getobj__
         if !@obj || @instance_version != @instance.__version__
-          @ref.executor = @instance.assembly_executor
+          @ref.executor = @instance.__executor__
           @obj = @ref.call
           @instance_version = @instance.__version__
         end
