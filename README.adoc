@@ -34,9 +34,7 @@ will not actively watch files or actively hook into services. Setting `enable` t
 .config/assembly.rb
 ```ruby
 Alki do
-  mount :reloader, 'alki/reload' do
-    set(:enable) { true }
-  end
+  try_mount :reloader, 'alki/reload', enable: true
 # ...
 end
 ```
@@ -51,30 +49,50 @@ of development mode.
 Alki do
   set(:development?) { ENV['APP_ENV'] != 'production' }
 
-  mount :reloader, 'alki/reload' do
+  try_mount :reloader, 'alki/reload' do
     set(:enable) { development? }
   end
 # ...
 end
 ```
 
+In addition, using `try_mount` instead of the normal `mount`
+will only mount the reloader if the gem can be found,
+which can be controlled using Bundler.
+
 ### Main Loops
 
-A problem that naturally comes up is how to reload an application, while the application is running.
-Most applications, when running, spend most of their time inside a "main loop". If it's a server,
-it might be the loop listening for incoming data, if it's a console application it might be the loop
-waiting for user input.
+One of the core issues in code reloading is when to actually do
+the reload.
+If your Assembly is called from some other code
+(such as a Rails application),
+then reloading can just be done between calls into the assembly.
 
-Because the main loop is always running, there is never an opportunity to reload it. Alki::Reload
-provides a feature to help work around this.
+But, if the entire application is running inside the assembly, then
+a way to reload the assembly while it's still running is needed.
 
-First off, because the service the main loop is in can't be reloaded, it should be made as small and
-simple as possible, offloading all other functionality into secondary services that it takes as
-dependencies.
+Most applications spend most of their time inside a "main loop".
+If it's a server,
+it might be the loop listening for incoming data,
+if it's a console application
+it might be the loop waiting for user input.
 
-Second, it should be tagged with a `main_loop` tag. By tagging your main loop service, Alki::Reload will
-actively hook into the service and wrap it's dependencies with wrapper objects that will pick up the
-new version of those dependencies whenever the project is reloaded.
+Because the main loop is always running,
+there is never an opportunity to reload it.
+Alki::Reload provides a feature to help work around this.
+
+First off, because the service the main loop is in can't be reloaded,
+it should be made as small and simple as possible,
+offloading all other functionality
+into secondary services that it takes
+as dependencies.
+
+Second, it should be tagged with a `main_loop` tag.
+By tagging your main loop service,
+Alki::Reload will actively hook into the service
+and wrap it's dependencies with wrapper objects
+that will pick up the new version of those dependencies
+whenever the project is reloaded.
 
 Alki::Loader must be enabled for this feature to be active.
 
@@ -122,7 +140,7 @@ is running the prompt and handler can be changed and reloaded.
 By default, `lib`, `config` and any files or directories configured in
 https://github.com/alki-project/alki-loader[Alki::Loader] are watched.
 
-Additional directories can be added by overriding the dirs element. Additional directories must also
+Additional directories can be added by overriding the `dirs` element. Additional directories must also
 be in `$LOAD_PATH`.
 
 .config/assembly.rb
