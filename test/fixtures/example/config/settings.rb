@@ -1,3 +1,3 @@
 Alki do
-  set :val, "<<one>>"
+  service(:val) { "<<one>>" }
 end

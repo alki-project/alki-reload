@@ -38,4 +38,13 @@ describe 'Main loops' do
     set_val 'two'
     get_val.must_equal '<<one>>'
   end
+
+  it 'should raise proper error when reloaded file has error' do
+    run_loop :main
+    get_val.must_equal '<<one>>'
+    set_val '#{1.foo}'
+    assert_raises NoMethodError do
+      get_val == '<<one>>'
+    end
+  end
 end
