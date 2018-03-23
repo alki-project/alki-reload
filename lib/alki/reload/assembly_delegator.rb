@@ -5,9 +5,10 @@ module Alki
     class AssemblyDelegator < Delegator
       def initialize(obj,watcher,reloader)
         @obj = obj
-        @loaded = false
+        @loaded = true
         @watcher = watcher
         @reloader = reloader
+        @watcher.start
       end
 
       def __unload__

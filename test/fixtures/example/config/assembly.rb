@@ -4,20 +4,17 @@ Alki do
 
   tag :main_loop
   service :main do
-    val = settings.val
-    -> input, output {
-      while input.pop
-        output.push val
-      end
-    }
+    settings.val
   end
 
   service :not_main do
-    val = settings.val
-    -> input, output {
-      while input.pop
-        output.push val
-      end
-    }
+    settings.val
   end
+
+  tag :main_loop
+  service :interface do
+    assembly
+  end
+
+  #ADD
 end

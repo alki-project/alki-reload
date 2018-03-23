@@ -32,8 +32,8 @@ module Alki
       class Listener
         def initialize(dirs,reloader)
           @count = 0
-          @listen = Listen.to(*dirs) do |modified, _added, _removed|
-            if @count > 0 && modified
+          @listen = Listen.to(*dirs) do |modified, added, removed|
+            if @count > 0 && (modified || added || removed)
               reloader.reload
             end
           end

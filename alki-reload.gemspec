@@ -21,5 +21,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "listen", "~> 3.0"
-  spec.add_dependency "alki", "~> 0.13.1"
+  spec.add_dependency "alki", "~> 0.13.3"
 end
