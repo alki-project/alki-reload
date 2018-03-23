@@ -39,6 +39,38 @@ Alki do
 end
 ```
 
+### Naming Pitfalls
+
+Alki::Reload attempts to be conservative in what it reloads.
+By default, it will only reload files which are in your project,
+and are either in the ruby load path
+or registered with https://github.com/alki-project/alki-loader[Alki::Loader].
+
+Additionally, Alki::Reload will only reload files where it can find a
+corresponding constant.
+This is done via a straightforward "classify" method which does *not* take
+abbreviations into account.
+
+#### Examples of Classes that Alki::Reload will not reload
+
+.lib/my_project/foo.rb
+```ruby
+class Foo
+end
+```
+
+Expects `Foo` to be in the module `MyProject`.
+
+.lib/my_project/http_client.rb
+```ruby
+module MyProject
+ class HTTPClient
+ end
+end
+```
+
+Doesn't know that "HTTP" is an acronym, so it expects class to be `HttpClient`.
+
 ### Conditional usage
 
 Because enabling reload can have a performance impact, typically it's only enabled when in some sort
