@@ -1,5 +1,7 @@
 = Alki::Reload
 
+image:https://travis-ci.org/alki-project/alki-reload.svg?branch=master["Build Status", link="https://travis-ci.org/alki-project/alki-reload"]
+
 Provides auto-reload feature to Alki projects. Like the auto-reload feature in Ruby on Rails, when
 enabled it will monitor source files and whenever a change is detected, will reload the project.
 
